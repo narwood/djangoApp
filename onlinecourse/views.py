@@ -88,20 +88,6 @@ class CourseDetailView(generic.DetailView):
     model = Course
     template_name = 'onlinecourse/course_detail_bootstrap.html'
 
-def show_exam_result(request, course_id, submission_id):
-    course = Course.objects.get(course_id)
-    submission = Submission.objects.get(submission_id)
-    total_points = 0
-    points_earned = 0
-    for choice in submission.choices:
-        total_points += choice.question_id.grade
-        if choice.is_correct:
-            points_earned += choice.question_id.grade
-    grade = points_earned/total_points
-    context = {"course":course, "selected_ids":submission.choices, "grade":grade}
-
-    return render(request, 'onlinecourse/exam_result_bootstrap.html', context)
-
 def enroll(request, course_id):
     course = get_object_or_404(Course, pk=course_id)
     user = request.user
@@ -140,10 +126,30 @@ def submit(request, course_id):
     
     enrollment = Enrollment.objects.get(user=user, course=course)
     choices = extract_answers(request)
-    submission = Submission.objects.create(enrollment=enrollment, choices=choices)
-    return HttpResponseRedirect(reverse(viewname='onlirnecourse:submit', args=(request, course.id, submission)))
+    submission = Submission.objects.create(enrollment=enrollment)
+    submission.choices.set(choices)
+    return HttpResponseRedirect(reverse(viewname='onlinecourse:result', args=(course.id, submission.id)))
     
+def show_exam_result(request, course_id, submission_id):
+    context = {}
+    course = get_object_or_404(Course, pk=course_id)
+    submission = Submission.objects.get(id=submission_id)
+    choices = submission.choices.all()
+    total_points = 0
+    points_earned = 0
+    for choice in choices:
+        total_points += choice.question_id.grade
+        if choice.is_correct:
+            points_earned += choice.question_id.grade
+    if total_points == 0:
+        grade = 0
+    else:
+        grade = int(points_earned*100/total_points)
+    context['course'] = course
+    context['grade'] = grade
+    context['choices'] = choices
 
+    return render(request, 'onlinecourse/exam_result_bootstrap.html', context)
 
 
 
