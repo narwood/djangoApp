@@ -46,7 +46,19 @@
                 {% for lesson in course.lesson_set.all %}
                     <div class="card mt-1">
                         <div class="card-header"><h5>Lesson {{lesson.order|add:1}}: {{lesson.title}}</h5></div>
-                        <div class="card-body">{{lesson.content}}</div>
+                        <div class="card-body">
+                            <button class="btn btn-link" data-toggle="collapse" data-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                                {{lesson.content}}
+                            </button>
+                            <div id="collapseOne" class="collapse show" aria-labelledby="headingOne" data-parent="#accordion">
+                                {% for question in lesson.question_set.all %}
+                                    <p>{{question.question_text}}</p>
+                                    {% for choice in question.choice_set.all %}
+                                        <p>{{choice.choice_text}}</p>
+                                    {% endfor %}
+                                {% endfor %}
+                            </div>
+                        </div>
                     </div>
                 {% endfor %}
             </div>
